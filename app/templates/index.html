@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<button type="button" id="run-simulation">Run Simulation</button>
+<button type="button" id="run-sensitivity">Run Sensitivity Analysis</button>
+
+<h2>Simulation Parameters</h2>
+
+<div class="tabs">
+    <button class="tablinks active" onclick="openTab(event, 'MarketSetup')">Market Setup</button>
+    <button class="tablinks" onclick="openTab(event, 'MarketShare')">Market Share</button>
+    <button class="tablinks" onclick="openTab(event, 'CompanyParams')">Company Parameters</button>
+    <button class="tablinks" onclick="openTab(event, 'SensitivityOptions')">Sensitivity Options</button>
+</div>
+
+<form id="simulation-form">
+    <div id="MarketSetup" class="tabcontent" style="display:block;">
+        <div class="param-group">
+            <label for="num_simulations">Number of Simulations:</label>
+            <input type="number" id="num_simulations" name="num_simulations" value="1000" step="100" required>
+        </div>
+        
+        <div class="param-group">
+            <label for="market_size_2025">Market Size 2025 ($B):</label>
+            <input type="number" id="market_size_2025" name="market_size_2025" value="5.2" step="0.1" required>
+        </div>
+
+        <div class="param-group">
+            <label for="market_cagr">Market CAGR:</label>
+            <input type="number" id="market_cagr" name="market_cagr" value="0.15" step="0.01" required>
+        </div>
+
+        <div class="param-group">
+            <label for="market_decay_rate">Market Decay Rate:</label>
+            <input type="number" id="market_decay_rate" name="market_decay_rate" value="0.2" step="0.01" required>
+        </div>
+
+        <div class="param-group">
+            <label for="randomness_scale">Randomness Scale:</label>
+            <input type="number" id="randomness_scale" name="randomness_scale" value="3.0" step="0.1" required>
+        </div>
+
+        <div class="param-group">
+            <label for="min_retention_factor">Min Retention Factor:</label>
+            <input type="number" id="min_retention_factor" name="min_retention_factor" value="0.6" step="0.1" required>
+        </div>
+
+        <div class="param-group">
+            <label for="max_retention_factor">Max Retention Factor:</label>
+            <input type="number" id="max_retention_factor" name="max_retention_factor" value="1.1" step="0.1" required>
+        </div>
+
+        <div class="param-group">
+            <label for="retention_decay_rate">Retention Decay Rate:</label>
+            <input type="number" id="retention_decay_rate" name="retention_decay_rate" value="0.6" step="0.1" required>
+        </div>
+    </div>
+
+    <div id="MarketShare" class="tabcontent">
+        <div class="param-group">
+            <label for="Betano_market_share">Betano Market Share:</label>
+            <input type="number" id="Betano_market_share" name="Betano_market_share" value="0.23" step="0.01" min="0" max="1" required onchange="updateOthersMarketShare()">
+        </div>
+        <div class="param-group">
+            <label for="Bet365_market_share">Bet365 Market Share:</label>
+            <input type="number" id="Bet365_market_share" name="Bet365_market_share" value="0.20" step="0.01" min="0" max="1" required onchange="updateOthersMarketShare()">
+        </div>
+        <div class="param-group">
+            <label for="BetNacional_market_share">BetNacional Market Share:</label>
+            <input type="number" id="BetNacional_market_share" name="BetNacional_market_share" value="0.10" step="0.01" min="0" max="1" required onchange="updateOthersMarketShare()">
+        </div>
+        <div class="param-group">
+            <label for="Superbet_market_share">Superbet Market Share:</label>
+            <input type="number" id="Superbet_market_share" name="Superbet_market_share" value="0.05" step="0.01" min="0" max="1" required onchange="updateOthersMarketShare()">
+        </div>
+        <div class="param-group">
+            <label for="Others_market_share">Others Market Share:</label>
+            <input type="number" id="Others_market_share" name="Others_market_share" value="0.42" step="0.01" min="0" max="1" readonly>
+        </div>
+    </div>
+
+    <div id="CompanyParams" class="tabcontent">
+        <h4>Betano</h4>
+        <div class="param-group">
+            <label for="Betano_marketing_spend">Marketing Spend (M$):</label>
+            <input type="number" id="Betano_marketing_spend" name="Betano_marketing_spend" value="650" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Betano_marketing_roi">Marketing ROI:</label>
+            <input type="number" id="Betano_marketing_roi" name="Betano_marketing_roi" value="1.1" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Betano_scale_growth_factor">Scale Growth Factor:</label>
+            <input type="number" id="Betano_scale_growth_factor" name="Betano_scale_growth_factor" value="1.1" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Betano_retention_rate">Retention Rate:</label>
+            <input type="number" id="Betano_retention_rate" name="Betano_retention_rate" value="0.45" step="0.01" min="0" max="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Betano_spend_growth">Spend Growth:</label>
+            <input type="number" id="Betano_spend_growth" name="Betano_spend_growth" value="0.05" step="0.01" required>
+        </div>
+
+        <h4>Bet365</h4>
+        <div class="param-group">
+            <label for="Bet365_marketing_spend">Marketing Spend (M$):</label>
+            <input type="number" id="Bet365_marketing_spend" name="Bet365_marketing_spend" value="50" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Bet365_marketing_roi">Marketing ROI:</label>
+            <input type="number" id="Bet365_marketing_roi" name="Bet365_marketing_roi" value="1.5" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Bet365_scale_growth_factor">Scale Growth Factor:</label>
+            <input type="number" id="Bet365_scale_growth_factor" name="Bet365_scale_growth_factor" value="1.2" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Bet365_retention_rate">Retention Rate:</label>
+            <input type="number" id="Bet365_retention_rate" name="Bet365_retention_rate" value="0.55" step="0.01" min="0" max="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Bet365_spend_growth">Spend Growth:</label>
+            <input type="number" id="Bet365_spend_growth" name="Bet365_spend_growth" value="0.05" step="0.01" required>
+        </div>
+
+        <h4>BetNacional</h4>
+        <div class="param-group">
+            <label for="BetNacional_marketing_spend">Marketing Spend (M$):</label>
+            <input type="number" id="BetNacional_marketing_spend" name="BetNacional_marketing_spend" value="200" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="BetNacional_marketing_roi">Marketing ROI:</label>
+            <input type="number" id="BetNacional_marketing_roi" name="BetNacional_marketing_roi" value="1.2" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="BetNacional_scale_growth_factor">Scale Growth Factor:</label>
+            <input type="number" id="BetNacional_scale_growth_factor" name="BetNacional_scale_growth_factor" value="1.2" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="BetNacional_retention_rate">Retention Rate:</label>
+            <input type="number" id="BetNacional_retention_rate" name="BetNacional_retention_rate" value="0.53" step="0.01" min="0" max="1" required>
+        </div>
+        <div class="param-group">
+            <label for="BetNacional_spend_growth">Spend Growth:</label>
+            <input type="number" id="BetNacional_spend_growth" name="BetNacional_spend_growth" value="0.15" step="0.01" required>
+        </div>
+
+        <h4>Superbet</h4>
+        <div class="param-group">
+            <label for="Superbet_marketing_spend">Marketing Spend (M$):</label>
+            <input type="number" id="Superbet_marketing_spend" name="Superbet_marketing_spend" value="160" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Superbet_marketing_roi">Marketing ROI:</label>
+            <input type="number" id="Superbet_marketing_roi" name="Superbet_marketing_roi" value="1.5" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Superbet_scale_growth_factor">Scale Growth Factor:</label>
+            <input type="number" id="Superbet_scale_growth_factor" name="Superbet_scale_growth_factor" value="1.15" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Superbet_retention_rate">Retention Rate:</label>
+            <input type="number" id="Superbet_retention_rate" name="Superbet_retention_rate" value="0.45" step="0.01" min="0" max="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Superbet_spend_growth">Spend Growth:</label>
+            <input type="number" id="Superbet_spend_growth" name="Superbet_spend_growth" value="0.15" step="0.01" required>
+        </div>
+
+        <h4>Others</h4>
+        <div class="param-group">
+            <label for="Others_marketing_spend">Marketing Spend (M$):</label>
+            <input type="number" id="Others_marketing_spend" name="Others_marketing_spend" value="250" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Others_marketing_roi">Marketing ROI:</label>
+            <input type="number" id="Others_marketing_roi" name="Others_marketing_roi" value="0.9" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Others_scale_growth_factor">Scale Growth Factor:</label>
+            <input type="number" id="Others_scale_growth_factor" name="Others_scale_growth_factor" value="1.0" step="0.1" required>
+        </div>
+        <div class="param-group">
+            <label for="Others_retention_rate">Retention Rate:</label>
+            <input type="number" id="Others_retention_rate" name="Others_retention_rate" value="0.35" step="0.01" min="0" max="1" required>
+        </div>
+        <div class="param-group">
+            <label for="Others_spend_growth">Spend Growth:</label>
+            <input type="number" id="Others_spend_growth" name="Others_spend_growth" value="0.15" step="0.01" required>
+        </div>
+    </div>
+
+    <div id="SensitivityOptions" class="tabcontent">
+        <div class="param-group">
+            <label for="sensitivity-params">Select Parameters (1-3):</label>
+            <select id="sensitivity-params" name="sensitivity_params" multiple>
+                <option value="marketing_spend">Marketing Spend</option>
+                <option value="marketing_roi">Marketing ROI</option>
+                <option value="scale_growth_factor">Scale Growth Factor</option>
+                <option value="retention_rate">Retention Rate</option>
+                <option value="spend_growth">Spend Growth</option>
+            </select>
+        </div>
+        <div class="param-group">
+            <label for="sensitivity-steps">Number of Variations:</label>
+            <input type="number" id="sensitivity-steps" name="sensitivity_steps" value="5" min="3" max="10" step="1" required>
+        </div>
+        <div class="param-group">
+            <label for="sensitivity-variation">Variation Percentage:</label>
+            <input type="number" id="sensitivity-variation" name="sensitivity_variation" value="20" min="1" max="50" step="1" required>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block content %}
+<div id="loading" class="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>Running analysis...</p>
+</div>
+<div id="simulation-results"></div>
+<div id="sensitivity-results"></div>
+
+<script>
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+$(document).ready(function() {
+    // Set the first tab (Market Setup) as active by default
+    document.getElementById("MarketSetup").style.display = "block";
+
+    function clearResults() {
+        $('#simulation-results').html('');
+        $('#sensitivity-results').html('');
+    }
+
+    function showLoading() {
+        clearResults();
+        $('#loading').show();
+    }
+
+    function hideLoading() {
+        $('#loading').hide();
+    }
+
+    $('#run-simulation').click(function() {
+        showLoading();
+        $.ajax({
+            url: '/run_simulation',
+            method: 'POST',
+            data: $('#simulation-form').serialize(),
+            success: function(response) {
+                hideLoading();
+                $('#simulation-results').html(response);
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                console.error("An error occurred: " + error);
+                $('#simulation-results').html("An error occurred while running the simulation.");
+            }
+        });
+    });
+
+    $('#run-sensitivity').click(function() {
+        showLoading();
+        $.ajax({
+            url: '/run_sensitivity',
+            method: 'POST',
+            data: $('#simulation-form').serialize(),
+            success: function(response) {
+                hideLoading();
+                $('#sensitivity-results').html(response);
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                console.error("An error occurred: " + error);
+                $('#sensitivity-results').html("An error occurred while running the sensitivity analysis.");
+            }
+        });
+    });
+
+    // Initialize the market share calculation
+    updateOthersMarketShare();
+});
+
+function updateOthersMarketShare() {
+    var totalShare = 0;
+    var companies = ['Betano', 'Bet365', 'BetNacional', 'Superbet'];
+    companies.forEach(function(company) {
+        totalShare += parseFloat(document.getElementById(company + '_market_share').value) || 0;
+    });
+    var othersShare = Math.max(0, 1 - totalShare);
+    document.getElementById('Others_market_share').value = othersShare.toFixed(2);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,207 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+header, footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+}
+
+.sidebar {
+    width: 30%;
+    max-width: 400px;
+    background-color: #f4f4f4;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.main-content {
+    width: 70%;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label, input, select {
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+}
+
+input, select {
+    width: 100%;
+    padding: 0.25rem;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #333;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    cursor: pointer;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+#sensitivity-params {
+    height: 100px;
+}
+
+.tabs {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    margin-bottom: 1rem;
+}
+
+.tabs button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    transition: 0.3s;
+    font-size: 0.8rem;
+    margin-top: 0;
+    color: black;
+}
+
+.tabs button:hover {
+    background-color: #ddd;
+}
+
+.tabs button.active {
+    background-color: #ccc;
+}
+
+.tabcontent {
+    display: none;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+h4 {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.sidebar h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.sidebar input[type="number"] {
+    width: 100%;
+    padding: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.sidebar select {
+    width: 100%;
+    padding: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.sidebar label {
+    display: inline-block;
+    width: 50%;
+    font-size: 0.8rem;
+}
+
+.sidebar input, .sidebar select {
+    display: inline-block;
+    width: 45%;
+    font-size: 0.8rem;
+    padding: 0.2rem;
+}
+
+/* Add these styles at the end of the file */
+.company-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.company-params {
+    display: flex;
+    flex-direction: column;
+}
+
+.company-params h4 {
+    margin-bottom: 0.5rem;
+}
+
+.company-params label {
+    font-size: 0.7rem;
+    margin-bottom: 0.1rem;
+}
+
+.company-params input {
+    font-size: 0.8rem;
+    padding: 0.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.param-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.param-group label {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.param-group input,
+.param-group select {
+    flex: 1;
+}

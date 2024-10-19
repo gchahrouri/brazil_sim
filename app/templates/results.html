@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Simulation Results</h2>
+<img src="data:image/png;base64,{{ plot_data }}" alt="Market Share Plot">
+<table>
+    <thead>
+        <tr>
+            <th>Year</th>
+            <th>Competitor</th>
+            <th>Market Share (Mean)</th>
+            <th>Market Share (Std Dev)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in summary %}
+        <tr>
+            <td>{{ row.year }}</td>
+            <td>{{ row.competitor }}</td>
+            <td>{{ "%.2f%%" | format(row.market_share_mean * 100) }}</td>
+            <td>{{ "%.2f%%" | format(row.market_share_std * 100) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('index') }}" class="button">Run Another Simulation</a>
+{% endblock %}

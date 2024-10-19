@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brazil Market Sim</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Brazil Market Sim</h1>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            {% block sidebar %}{% endblock %}
+        </div>
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2023 Brazil Market Sim</p>
+    </footer>
+</body>
+</html>
