@@ -7,5 +7,12 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
-      - key: SQLITE_DB_PATH
-        value: /var/data/user_actions.db
+      - key: DATABASE_URL
+        fromDatabase:
+          name: brazil-sim-db
+          property: connectionString
+
+databases:
+  - name: brazil-sim-db
+    databaseName: brazil_sim
+    user: brazil_sim

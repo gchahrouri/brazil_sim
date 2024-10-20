@@ -1,67 +1,71 @@
 import logging
 from flask import request
-import sqlite3
+import psycopg2
+from psycopg2.extras import DictCursor
 from datetime import datetime, date, timedelta
 import uuid
 import pytz
 import os
 
-# Use an environment variable for the database path, with a default for local development
-DB_PATH = os.environ.get('SQLITE_DB_PATH', 'user_actions.db')
+# Use environment variables for database connection
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     return conn
 
 def init_db():
     conn = get_db_connection()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS user_actions
-                 (id TEXT, timestamp TEXT, action TEXT, details TEXT)''')
+    cur = conn.cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS user_actions
+                   (id TEXT, timestamp TIMESTAMP, action TEXT, details TEXT)''')
     conn.commit()
+    cur.close()
     conn.close()
 
 def log_action(action, details=''):
     conn = get_db_connection()
-    c = conn.cursor()
-    timestamp = datetime.now().isoformat()
+    cur = conn.cursor()
+    timestamp = datetime.now(pytz.utc)
     user_id = request.cookies.get('user_id', str(uuid.uuid4()))
-    c.execute("INSERT INTO user_actions VALUES (?, ?, ?, ?)",
-              (user_id, timestamp, action, details))
+    cur.execute("INSERT INTO user_actions (id, timestamp, action, details) VALUES (%s, %s, %s, %s)",
+                (user_id, timestamp, action, details))
     conn.commit()
+    cur.close()
     conn.close()
-    print(f"Debug - Logged action: {action}, Details: {details}, User ID: {user_id}")  # Debug log
+    logging.info(f"Logged action: {action}, Details: {details}, User ID: {user_id}")
     return user_id
 
 def get_unique_users():
     conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT COUNT(DISTINCT id) FROM user_actions")
-    count = c.fetchone()[0]
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(DISTINCT id) FROM user_actions")
+    count = cur.fetchone()[0]
+    cur.close()
     conn.close()
     return count
 
 def get_action_count(action):
     conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM user_actions WHERE action = ?", (action,))
-    count = c.fetchone()[0]
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM user_actions WHERE action = %s", (action,))
+    count = cur.fetchone()[0]
+    cur.close()
     conn.close()
     return count
 
 def get_parameter_changes():
     conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT details FROM user_actions WHERE action = 'parameter_change'")
-    changes = [row[0].split(':')[0] for row in c.fetchall()]  # Only keep the parameter name, not the value
-    change_counts = [(param, changes.count(param)) for param in set(changes)]
+    cur = conn.cursor()
+    cur.execute("SELECT details FROM user_actions WHERE action = 'parameter_change'")
+    changes = [row[0].split(':')[0] for row in cur.fetchall()]
+    cur.close()
     conn.close()
-    return sorted(change_counts, key=lambda x: x[1], reverse=True)  # Sort by count in descending order
+    return [(param, changes.count(param)) for param in set(changes)]
 
 def get_analytics_data():
     conn = get_db_connection()
-    c = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor)
     
     pacific_tz = pytz.timezone('America/Los_Angeles')
     end_date = datetime.now(pacific_tz).date()
@@ -73,47 +77,39 @@ def get_analytics_data():
     total_users = get_unique_users()
     total_simulation_runs = get_action_count('run_simulation')
     total_sensitivity_runs = get_action_count('run_sensitivity')
-    
-    logging.info(f"Total users: {total_users}")
-    logging.info(f"Total simulation runs: {total_simulation_runs}")
-    logging.info(f"Total sensitivity runs: {total_sensitivity_runs}")
 
-    # Get unique users per day data in Pacific Time
-    c.execute("""
-        SELECT date(datetime(timestamp, 'localtime')) as day, COUNT(DISTINCT id) as user_count
+    # Get users per day data in Pacific Time
+    cur.execute("""
+        SELECT DATE(timestamp AT TIME ZONE 'America/Los_Angeles') as day, COUNT(DISTINCT id) as user_count
         FROM user_actions
-        WHERE date(datetime(timestamp, 'localtime')) >= ?
-        GROUP BY date(datetime(timestamp, 'localtime'))
-        ORDER BY date(datetime(timestamp, 'localtime'))
-    """, (start_date.strftime('%Y-%m-%d'),))
-    users_per_day = c.fetchall()
-    
-    logging.info(f"Users per day: {users_per_day}")
+        WHERE timestamp AT TIME ZONE 'America/Los_Angeles' >= %s
+        GROUP BY DATE(timestamp AT TIME ZONE 'America/Los_Angeles')
+        ORDER BY day
+    """, (start_date,))
+    users_per_day = cur.fetchall()
 
-    # Get unique simulation users per day in Pacific Time
-    c.execute("""
-        SELECT date(datetime(timestamp, 'localtime')) as day, COUNT(DISTINCT id) as user_count
+    # Get simulation and sensitivity users per day in Pacific Time
+    cur.execute("""
+        SELECT DATE(timestamp AT TIME ZONE 'America/Los_Angeles') as day, COUNT(DISTINCT id) as user_count
         FROM user_actions
-        WHERE action = 'run_simulation' AND date(datetime(timestamp, 'localtime')) >= ?
-        GROUP BY date(datetime(timestamp, 'localtime'))
-        ORDER BY date(datetime(timestamp, 'localtime'))
-    """, (start_date.strftime('%Y-%m-%d'),))
-    simulation_users_per_day = c.fetchall()
-    
-    # Get unique sensitivity analysis users per day in Pacific Time
-    c.execute("""
-        SELECT date(datetime(timestamp, 'localtime')) as day, COUNT(DISTINCT id) as user_count
+        WHERE action = 'run_simulation' AND timestamp AT TIME ZONE 'America/Los_Angeles' >= %s
+        GROUP BY DATE(timestamp AT TIME ZONE 'America/Los_Angeles')
+        ORDER BY day
+    """, (start_date,))
+    simulation_users_per_day = cur.fetchall()
+
+    cur.execute("""
+        SELECT DATE(timestamp AT TIME ZONE 'America/Los_Angeles') as day, COUNT(DISTINCT id) as user_count
         FROM user_actions
-        WHERE action = 'run_sensitivity' AND date(datetime(timestamp, 'localtime')) >= ?
-        GROUP BY date(datetime(timestamp, 'localtime'))
-        ORDER BY date(datetime(timestamp, 'localtime'))
-    """, (start_date.strftime('%Y-%m-%d'),))
-    sensitivity_users_per_day = c.fetchall()
-    
-    logging.info(f"Simulation users per day: {simulation_users_per_day}")
-    logging.info(f"Sensitivity users per day: {sensitivity_users_per_day}")
-    
+        WHERE action = 'run_sensitivity' AND timestamp AT TIME ZONE 'America/Los_Angeles' >= %s
+        GROUP BY DATE(timestamp AT TIME ZONE 'America/Los_Angeles')
+        ORDER BY day
+    """, (start_date,))
+    sensitivity_users_per_day = cur.fetchall()
+
+    cur.close()
     conn.close()
+
     return {
         'total_users': total_users,
         'total_simulation_runs': total_simulation_runs,
