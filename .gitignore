@@ -12,6 +12,8 @@ venv.bak/
 *.egg-info/
 .installed.cfg
 *.egg
+*.pyc
+*.sqlite
 
 # Flask
 instance/
@@ -20,6 +22,7 @@ instance/
 # IDEs
 .vscode/
 .idea/
+.vercel
 
 # OS generated files
 .DS_Store

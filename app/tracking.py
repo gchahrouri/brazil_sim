@@ -6,7 +6,7 @@ import uuid
 import pytz
 
 def init_db():
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS user_actions
                  (id TEXT, timestamp TEXT, action TEXT, details TEXT)''')
@@ -14,7 +14,7 @@ def init_db():
     conn.close()
 
 def log_action(action, details=''):
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     timestamp = datetime.now().isoformat()
     user_id = request.cookies.get('user_id', str(uuid.uuid4()))
@@ -26,7 +26,7 @@ def log_action(action, details=''):
     return user_id
 
 def get_unique_users():
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     c.execute("SELECT COUNT(DISTINCT id) FROM user_actions")
     count = c.fetchone()[0]
@@ -34,7 +34,7 @@ def get_unique_users():
     return count
 
 def get_action_count(action):
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM user_actions WHERE action = ?", (action,))
     count = c.fetchone()[0]
@@ -42,7 +42,7 @@ def get_action_count(action):
     return count
 
 def get_parameter_changes():
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     c.execute("SELECT details FROM user_actions WHERE action = 'parameter_change'")
     changes = [row[0].split(':')[0] for row in c.fetchall()]  # Only keep the parameter name, not the value
@@ -51,7 +51,7 @@ def get_parameter_changes():
     return sorted(change_counts, key=lambda x: x[1], reverse=True)  # Sort by count in descending order
 
 def get_analytics_data():
-    conn = sqlite3.connect('user_actions.db')
+    conn = sqlite3.connect(':memory:')
     c = conn.cursor()
     
     pacific_tz = pytz.timezone('America/Los_Angeles')
