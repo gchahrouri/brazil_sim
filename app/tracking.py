@@ -4,9 +4,18 @@ import sqlite3
 from datetime import datetime, date, timedelta
 import uuid
 import pytz
+import os
+
+# Use an environment variable for the database path, with a default for local development
+DB_PATH = os.environ.get('SQLITE_DB_PATH', 'user_actions.db')
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS user_actions
                  (id TEXT, timestamp TEXT, action TEXT, details TEXT)''')
@@ -14,7 +23,7 @@ def init_db():
     conn.close()
 
 def log_action(action, details=''):
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     timestamp = datetime.now().isoformat()
     user_id = request.cookies.get('user_id', str(uuid.uuid4()))
@@ -26,7 +35,7 @@ def log_action(action, details=''):
     return user_id
 
 def get_unique_users():
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(DISTINCT id) FROM user_actions")
     count = c.fetchone()[0]
@@ -34,7 +43,7 @@ def get_unique_users():
     return count
 
 def get_action_count(action):
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM user_actions WHERE action = ?", (action,))
     count = c.fetchone()[0]
@@ -42,16 +51,16 @@ def get_action_count(action):
     return count
 
 def get_parameter_changes():
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT details FROM user_actions WHERE action = 'parameter_change'")
     changes = [row[0].split(':')[0] for row in c.fetchall()]  # Only keep the parameter name, not the value
-    conn.close()
     change_counts = [(param, changes.count(param)) for param in set(changes)]
+    conn.close()
     return sorted(change_counts, key=lambda x: x[1], reverse=True)  # Sort by count in descending order
 
 def get_analytics_data():
-    conn = sqlite3.connect(':memory:')
+    conn = get_db_connection()
     c = conn.cursor()
     
     pacific_tz = pytz.timezone('America/Los_Angeles')
@@ -105,7 +114,6 @@ def get_analytics_data():
     logging.info(f"Sensitivity users per day: {sensitivity_users_per_day}")
     
     conn.close()
-    
     return {
         'total_users': total_users,
         'total_simulation_runs': total_simulation_runs,
