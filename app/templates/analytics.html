@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+<h2>App Lifetime Totals</h2>
+<p>Unique Users: {{ analytics_data.total_users }}</p>
+<p>Simulation Runs: {{ analytics_data.total_simulation_runs }}</p>
+<p>Sensitivity Analysis Runs: {{ analytics_data.total_sensitivity_runs }}</p>
+
+<h3>Parameter Changes</h3>
+<ul>
+{% for param, count in parameter_changes %}
+    <li>{{ param }}: {{ count }}</li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+{% block content %}
+<div id="uniqueUsersGraph" style="width:100%; height:400px;"></div>
+<div id="actionUsersGraph" style="width:100%; height:400px;"></div>
+<div id="avgRunsGraph" style="width:100%; height:400px;"></div>
+
+<script>
+    var analyticsData = {{ analytics_data | tojson | safe }};
+    
+    // Function to get the last 7 days in Pacific Time, up to and including today
+    function getLast7DaysPT() {
+        var result = [];
+        var now = new Date();
+        var ptNow = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+        var ptToday = new Date(ptNow.getFullYear(), ptNow.getMonth(), ptNow.getDate());
+        
+        for (var i = 6; i >= 0; i--) {
+            var d = new Date(ptToday);
+            d.setDate(d.getDate() - i);
+            result.push(d.toISOString().split('T')[0]);
+        }
+        return result;
+    }
+
+    var last7Days = getLast7DaysPT();
+
+    // Function to fill in missing days with zero values
+    function fillMissingDays(data) {
+        var filledData = {};
+        last7Days.forEach(day => filledData[day] = 0);
+        data.forEach(d => {
+            if (filledData.hasOwnProperty(d[0])) {
+                filledData[d[0]] = d[1];
+            }
+        });
+        return last7Days.map(day => [day, filledData[day]]);
+    }
+
+    var filledUsersPerDay = fillMissingDays(analyticsData.users_per_day);
+    
+    // Unique users per day
+    var trace1 = {
+        x: filledUsersPerDay.map(d => d[0]),
+        y: filledUsersPerDay.map(d => d[1]),
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Unique Users per Day'
+    };
+    
+    var layout1 = {
+        title: 'Unique Users per Day',
+        xaxis: { 
+            title: 'Date',
+            tickformat: '%m-%d',
+            range: [last7Days[0], last7Days[6]]
+        },
+        yaxis: { title: 'Number of Users' }
+    };
+    
+    Plotly.newPlot('uniqueUsersGraph', [trace1], layout1);
+
+    // Unique users for simulation and sensitivity analysis
+    var filledSimulationUsers = fillMissingDays(analyticsData.simulation_users_per_day);
+    var filledSensitivityUsers = fillMissingDays(analyticsData.sensitivity_users_per_day);
+
+    var trace2 = {
+        x: filledSimulationUsers.map(d => d[0]),
+        y: filledSimulationUsers.map(d => d[1]),
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Simulation Users'
+    };
+    
+    var trace3 = {
+        x: filledSensitivityUsers.map(d => d[0]),
+        y: filledSensitivityUsers.map(d => d[1]),
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Sensitivity Analysis Users'
+    };
+    
+    var layout2 = {
+        title: 'Unique Users for Simulation and Sensitivity Analysis per Day',
+        xaxis: { 
+            title: 'Date',
+            tickformat: '%m-%d',
+            range: [last7Days[0], last7Days[6]]
+        },
+        yaxis: { title: 'Number of Users' }
+    };
+    
+    Plotly.newPlot('actionUsersGraph', [trace2, trace3], layout2);
+
+    // Average runs per user per session
+    var trace4 = {
+        x: ['Simulations', 'Sensitivity Analysis'],
+        y: [analyticsData.total_simulation_runs / analyticsData.total_users, 
+            analyticsData.total_sensitivity_runs / analyticsData.total_users],
+        type: 'bar',
+        name: 'Average Runs per User'
+    };
+    
+    var layout3 = {
+        title: 'Average Runs per User',
+        xaxis: { title: 'Analysis Type' },
+        yaxis: { title: 'Number of Runs' }
+    };
+    
+    Plotly.newPlot('avgRunsGraph', [trace4], layout3);
+</script>
+{% endblock %}

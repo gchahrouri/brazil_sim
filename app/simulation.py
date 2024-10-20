@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.optimize import minimize_scalar
 import logging
 import itertools
+
 logging.basicConfig(level=logging.DEBUG)
 
 def apply_stochastic_variation(base_value, variation_scale, randomness_scale, distribution='normal'):
@@ -151,7 +152,7 @@ def run_sensitivity_analysis(params, superbet_params, sensitivity_params, compet
             base_value = superbet_params[param]
             param_values = np.linspace(base_value * (1 - variation), base_value * (1 + variation), steps)
             param_combinations.append([(param, value) for value in param_values])
-        param_combinations = list(itertools.chain(*param_combinations))
+        param_combinations = list(itertools.product(*param_combinations))
 
     for combo in param_combinations:
         temp_competitors = [comp.copy() for comp in competitors]
@@ -160,11 +161,9 @@ def run_sensitivity_analysis(params, superbet_params, sensitivity_params, compet
         if len(sensitivity_params) == 2:
             superbet[sensitivity_params[0]] = combo[0]
             superbet[sensitivity_params[1]] = combo[1]
-            current_params = {sensitivity_params[0]: combo[0], sensitivity_params[1]: combo[1]}
         else:
-            param, value = combo
-            superbet[param] = value
-            current_params = {param: value}
+            for param, value in combo:
+                superbet[param] = value
 
         sim_results = run_simulation(
             params['market_size_2025'], params['market_cagr'], params['market_decay_rate'],
@@ -173,32 +172,28 @@ def run_sensitivity_analysis(params, superbet_params, sensitivity_params, compet
             params['retention_decay_rate'], params['num_simulations']
         )
 
-        summary = sim_results.groupby(['year', 'competitor']).agg({
+        summary = sim_results[sim_results['competitor'] == 'Superbet'].groupby('year').agg({
             'market_share': ['mean', 'std']
         }).reset_index()
-        summary.columns = ['year', 'competitor', 'market_share_mean', 'market_share_std']
+        summary.columns = ['year', 'market_share_mean', 'market_share_std']
 
-        superbet_summary = summary[summary['competitor'] == 'Superbet']
-
-        for _, row in superbet_summary.iterrows():
+        for _, row in summary.iterrows():
             result = {
                 'year': row['year'],
                 'market_share_mean': row['market_share_mean'],
                 'market_share_std': row['market_share_std']
             }
-            result.update(current_params)
-            for param, value in current_params.items():
-                result[f'{param}_value'] = value
+            if len(sensitivity_params) == 2:
+                result[sensitivity_params[0]] = combo[0]
+                result[sensitivity_params[1]] = combo[1]
+            else:
+                for param, value in combo:
+                    result[param] = value
             results.append(result)
 
     result_df = pd.DataFrame(results)
     
-    # Add 'parameter' column
-    if len(sensitivity_params) == 1:
-        result_df['parameter'] = sensitivity_params[0]
-    elif len(sensitivity_params) == 2:
-        result_df['parameter'] = 'combined'
-    
     logging.debug(f"Sensitivity analysis results shape: {result_df.shape}")
     logging.debug(f"Sensitivity analysis results head: {result_df.head()}")
+    logging.debug(f"Sensitivity analysis results columns: {result_df.columns}")
     return result_df

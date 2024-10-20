@@ -293,6 +293,17 @@ $(document).ready(function() {
 
     // Initialize the market share calculation
     updateOthersMarketShare();
+
+    $('input, select').change(function() {
+        $.ajax({
+            url: '/update_parameter',
+            method: 'POST',
+            data: {
+                parameter: $(this).attr('name'),
+                value: $(this).val()
+            }
+        });
+    });
 });
 
 function updateOthersMarketShare() {

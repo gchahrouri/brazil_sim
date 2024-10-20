@@ -24,4 +24,34 @@
     </tbody>
 </table>
 <a href="{{ url_for('index') }}" class="button">Run Another Simulation</a>
+
+<div id="sensitivityResults"></div>
+
+<script>
+    $('#run-sensitivity').click(function() {
+        showLoading();
+        $.ajax({
+            url: '/run_sensitivity',
+            method: 'POST',
+            data: $('#simulation-form').serialize(),
+            success: function(response) {
+                hideLoading();
+                $('#sensitivityResults').html(response);
+                
+                // Force Plotly to relayout all graphs
+                var graphDivs = document.querySelectorAll('[class^="plotly-graph-div"]');
+                graphDivs.forEach(function(div) {
+                    Plotly.relayout(div, {});
+                });
+
+                console.log("Number of graphs rendered:", graphDivs.length);
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                console.error("An error occurred: " + error);
+                $('#sensitivityResults').html("An error occurred while running the sensitivity analysis.");
+            }
+        });
+    });
+</script>
 {% endblock %}
