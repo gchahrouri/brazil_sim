@@ -1,4 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # This loads the variables from .env
 from app import app
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)

@@ -52,7 +52,8 @@
     }
 
     var filledUsersPerDay = fillMissingDays(analyticsData.users_per_day);
-    
+    console.log("Filled users per day:", filledUsersPerDay);
+
     // Unique users per day
     var trace1 = {
         x: filledUsersPerDay.map(d => d[0]),
@@ -74,10 +75,12 @@
     
     Plotly.newPlot('uniqueUsersGraph', [trace1], layout1);
 
-    // Unique users for simulation and sensitivity analysis
     var filledSimulationUsers = fillMissingDays(analyticsData.simulation_users_per_day);
     var filledSensitivityUsers = fillMissingDays(analyticsData.sensitivity_users_per_day);
+    console.log("Filled simulation users:", filledSimulationUsers);
+    console.log("Filled sensitivity users:", filledSensitivityUsers);
 
+    // Unique users for simulation and sensitivity analysis
     var trace2 = {
         x: filledSimulationUsers.map(d => d[0]),
         y: filledSimulationUsers.map(d => d[1]),

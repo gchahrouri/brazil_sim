@@ -110,6 +110,15 @@ def get_analytics_data():
     cur.close()
     conn.close()
 
+    # Convert database results to list of tuples
+    users_per_day = [(row['day'].strftime('%Y-%m-%d'), row['user_count']) for row in users_per_day]
+    simulation_users_per_day = [(row['day'].strftime('%Y-%m-%d'), row['user_count']) for row in simulation_users_per_day]
+    sensitivity_users_per_day = [(row['day'].strftime('%Y-%m-%d'), row['user_count']) for row in sensitivity_users_per_day]
+
+    logging.info(f"Users per day: {users_per_day}")
+    logging.info(f"Simulation users per day: {simulation_users_per_day}")
+    logging.info(f"Sensitivity users per day: {sensitivity_users_per_day}")
+
     return {
         'total_users': total_users,
         'total_simulation_runs': total_simulation_runs,
