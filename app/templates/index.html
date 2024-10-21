@@ -17,7 +17,7 @@
     <div id="MarketSetup" class="tabcontent" style="display:block;">
         <div class="param-group">
             <label for="num_simulations">Number of Simulations:</label>
-            <input type="number" id="num_simulations" name="num_simulations" value="1000" step="100" required>
+            <input type="number" id="num_simulations" name="num_simulations" value="250" min="1" max="10000" step="1" required>
         </div>
         
         <div class="param-group">
@@ -204,11 +204,11 @@
         </div>
         <div class="param-group">
             <label for="sensitivity-steps">Number of Variations:</label>
-            <input type="number" id="sensitivity-steps" name="sensitivity_steps" value="5" min="3" max="10" step="1" required>
+            <input type="number" id="sensitivity-steps" name="sensitivity_steps" value="3" min="3" max="10" step="1" required>
         </div>
         <div class="param-group">
             <label for="sensitivity-variation">Variation Percentage:</label>
-            <input type="number" id="sensitivity-variation" name="sensitivity_variation" value="20" min="1" max="50" step="1" required>
+            <input type="number" id="sensitivity-variation" name="sensitivity_variation" value="35" min="1" max="99" step="1" required>
         </div>
     </div>
 </form>
@@ -219,6 +219,7 @@
     <div class="spinner"></div>
     <p>Running analysis...</p>
 </div>
+<div id="execution-time"></div>
 <div id="simulation-results"></div>
 <div id="sensitivity-results"></div>
 
@@ -244,10 +245,11 @@ $(document).ready(function() {
     function clearResults() {
         $('#simulation-results').html('');
         $('#sensitivity-results').html('');
+        $('#execution-time').text(''); // Add this line to clear execution time
     }
 
     function showLoading() {
-        clearResults();
+        clearResults(); // This will now also clear the execution time
         $('#loading').show();
     }
 
@@ -263,12 +265,14 @@ $(document).ready(function() {
             data: $('#simulation-form').serialize(),
             success: function(response) {
                 hideLoading();
-                $('#simulation-results').html(response);
+                $('#simulation-results').html(response.plot);
+                $('#execution-time').text('Execution time: ' + response.execution_time.toFixed(2) + ' seconds');
             },
             error: function(xhr, status, error) {
                 hideLoading();
                 console.error("An error occurred: " + error);
                 $('#simulation-results').html("An error occurred while running the simulation.");
+                $('#execution-time').text(''); // Clear execution time on error
             }
         });
     });
@@ -281,12 +285,15 @@ $(document).ready(function() {
             data: $('#simulation-form').serialize(),
             success: function(response) {
                 hideLoading();
-                $('#sensitivity-results').html(response);
+                $('#sensitivity-results').html(response.plots);
+                $('#execution-time').text('Execution time: ' + response.execution_time.toFixed(2) + ' seconds');
+                // Remove the warning message handling
             },
             error: function(xhr, status, error) {
                 hideLoading();
                 console.error("An error occurred: " + error);
                 $('#sensitivity-results').html("An error occurred while running the sensitivity analysis.");
+                $('#execution-time').text('');
             }
         });
     });
@@ -317,3 +324,4 @@ function updateOthersMarketShare() {
 }
 </script>
 {% endblock %}
+

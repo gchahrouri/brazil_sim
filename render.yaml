@@ -11,6 +11,9 @@ services:
         fromDatabase:
           name: brazil-sim-db
           property: connectionString
+    config:
+      timeout: 300 # Increased to 5 minutes
+      instanceType: basic # You can change this to 'standard' if needed for more power
 
 databases:
   - name: brazil-sim-db

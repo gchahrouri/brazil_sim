@@ -3,8 +3,9 @@ import pandas as pd
 from scipy.optimize import minimize_scalar
 import logging
 import itertools
+import time
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)  # Change to WARNING to reduce output
 
 def apply_stochastic_variation(base_value, variation_scale, randomness_scale, distribution='normal'):
     if distribution == 'normal':
@@ -52,7 +53,7 @@ def update_competitor_metrics(competitors, randomness_scale, current_year, start
         
         new_marketing_roi = max(0, apply_stochastic_variation(
             competitor['marketing_roi'], 0.05, randomness_scale, 'lognormal'))
-        if new_marketing_roi < 0.1:  # Flag if marketing ROI is less than 0.1
+        if new_marketing_roi < 0.1:
             logging.warning(f"Low marketing ROI detected for {competitor['name']}: {new_marketing_roi}")
         competitor['marketing_roi'] = new_marketing_roi
         
@@ -61,7 +62,7 @@ def update_competitor_metrics(competitors, randomness_scale, current_year, start
                                                        min_rate_factor, max_rate_factor, retention_decay_rate)
         new_retention_rate = max(0, min(1, apply_stochastic_variation(
             adjusted_retention_rate, 0.05, randomness_scale, 'normal')))
-        if new_retention_rate < 0.1:  # Flag if retention rate is less than 0.1
+        if new_retention_rate < 0.1:
             logging.warning(f"Low retention rate detected for {competitor['name']}: {new_retention_rate}")
         competitor['retention_rate'] = new_retention_rate
     
@@ -70,9 +71,8 @@ def update_competitor_metrics(competitors, randomness_scale, current_year, start
 def run_simulation(market_size_2025, market_cagr, market_decay_rate,
                    competitors, simulation_years, randomness_scale,
                    min_rate_factor, max_rate_factor, retention_decay_rate, num_simulations):
-    logging.debug(f"Starting simulation with {num_simulations} iterations")
-    logging.debug(f"Initial market size: {market_size_2025}, CAGR: {market_cagr}, Decay rate: {market_decay_rate}")
-    logging.debug(f"Competitors: {competitors}")
+    start_time = time.time()
+    logging.info(f"Starting simulation with {num_simulations} iterations")
     
     all_results = []
     for sim in range(num_simulations):
@@ -118,24 +118,14 @@ def run_simulation(market_size_2025, market_cagr, market_decay_rate,
                 })
 
     result_df = pd.DataFrame(all_results)
-    
-    # Add summary statistics
-    logging.debug("Summary statistics for marketing ROI:")
-    logging.debug(result_df.groupby('competitor')['marketing_roi'].describe())
-    
-    logging.debug("Summary statistics for retention rate:")
-    logging.debug(result_df.groupby('competitor')['retention_rate'].describe())
-    
-    logging.debug(f"Simulation results shape: {result_df.shape}")
-    logging.debug(f"Simulation results head: {result_df.head()}")
-    return result_df
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logging.info(f"Simulation completed in {execution_time:.2f} seconds. Results shape: {result_df.shape}")
+    return result_df, execution_time
 
 def run_sensitivity_analysis(params, superbet_params, sensitivity_params, competitors, steps, variation):
-    logging.debug(f"Starting sensitivity analysis for parameters: {sensitivity_params}")
-    logging.debug(f"Params: {params}")
-    logging.debug(f"Superbet params: {superbet_params}")
-    logging.debug(f"Competitors: {competitors}")
-    logging.debug(f"Steps: {steps}, Variation: {variation}")
+    start_time = time.time()
+    logging.info(f"Starting sensitivity analysis for parameters: {sensitivity_params}")
     
     results = []
     param_combinations = []
@@ -165,7 +155,7 @@ def run_sensitivity_analysis(params, superbet_params, sensitivity_params, compet
             for param, value in combo:
                 superbet[param] = value
 
-        sim_results = run_simulation(
+        sim_results, _ = run_simulation(  # Unpack the tuple here
             params['market_size_2025'], params['market_cagr'], params['market_decay_rate'],
             temp_competitors, 6, params['randomness_scale'],
             params['min_retention_factor'], params['max_retention_factor'],
@@ -192,8 +182,7 @@ def run_sensitivity_analysis(params, superbet_params, sensitivity_params, compet
             results.append(result)
 
     result_df = pd.DataFrame(results)
-    
-    logging.debug(f"Sensitivity analysis results shape: {result_df.shape}")
-    logging.debug(f"Sensitivity analysis results head: {result_df.head()}")
-    logging.debug(f"Sensitivity analysis results columns: {result_df.columns}")
-    return result_df
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logging.info(f"Sensitivity analysis completed in {execution_time:.2f} seconds. Results shape: {result_df.shape}")
+    return result_df, execution_time

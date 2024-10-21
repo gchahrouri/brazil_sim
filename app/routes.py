@@ -57,7 +57,7 @@ def run_simulation_route():
         'spend_growth': float(request.form['Others_spend_growth']),
     })
 
-    results = run_simulation(
+    results, execution_time = run_simulation(
         params['market_size_2025'], params['market_cagr'], params['market_decay_rate'],
         competitors, 6, params['randomness_scale'],
         params['min_retention_factor'], params['max_retention_factor'],
@@ -129,7 +129,7 @@ def run_simulation_route():
     )
 
     plot_div = pio.to_html(fig, full_html=False)
-    return plot_div
+    return jsonify({'plot': plot_div, 'execution_time': execution_time})
 
 @app.route('/run_sensitivity', methods=['POST'])
 def run_sensitivity_route():
@@ -145,6 +145,8 @@ def run_sensitivity_route():
         'max_retention_factor': float(request.form['max_retention_factor']),
         'retention_decay_rate': float(request.form['retention_decay_rate']),
     }
+
+    # Remove the backend logging for high number of simulations
 
     competitors = []
     for company in ['Betano', 'Bet365', 'BetNacional', 'Superbet', 'Others']:
@@ -176,7 +178,7 @@ def run_sensitivity_route():
     sensitivity_steps = int(request.form['sensitivity_steps'])
     sensitivity_variation = float(request.form['sensitivity_variation']) / 100
 
-    sensitivity_results = run_sensitivity_analysis(params, superbet_params, sensitivity_params, competitors, sensitivity_steps, sensitivity_variation)
+    sensitivity_results, execution_time = run_sensitivity_analysis(params, superbet_params, sensitivity_params, competitors, sensitivity_steps, sensitivity_variation)
     logging.info(f"Sensitivity results shape: {sensitivity_results.shape}")
     logging.info(f"Sensitivity results columns: {sensitivity_results.columns}")
     logging.info(f"Unique values for each parameter: {sensitivity_results[sensitivity_params].nunique().to_dict()}")
@@ -336,7 +338,11 @@ def run_sensitivity_route():
     logging.info(f"Sensitivity graphs generated for parameters: {sensitivity_params}")
 
     logging.info(f"Total number of graphs generated: {len(figs)}")
-    return '<div class="sensitivity-graphs">' + ''.join(figs) + '</div>'
+    return jsonify({
+        'plots': '<div class="sensitivity-graphs">' + ''.join(figs) + '</div>', 
+        'execution_time': execution_time
+        # Remove the 'warning' key
+    })
 
 @app.route('/update_parameter', methods=['POST'])
 def update_parameter():
